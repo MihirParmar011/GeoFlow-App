@@ -1,0 +1,12 @@
+{
+  "app_name": "GeoFlow",
+  "search_locations": "Search locations...",
+  "recently_visited": "RECENTLY VISITED",
+  "live_traffic": "LIVE TRAFFIC",
+  "latitude": "LATITUDE",
+  "longitude": "LONGITUDE",
+  "map": "Map",
+  "explore": "Explore",
+  "saved": "Saved",
+  "profile": "Profile"
+}

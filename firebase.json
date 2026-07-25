@@ -1,0 +1,27 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "geoflow-011",
+          "appId": "1:1011942886407:android:a9d46be3a6f3c7e2662ea2",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "geoflow-011",
+          "configurations": {
+            "android": "1:1011942886407:android:a9d46be3a6f3c7e2662ea2",
+            "ios": "1:1011942886407:ios:67c39f5a542edc13662ea2",
+            "web": "1:1011942886407:web:20a639fdc70ecfe6662ea2"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}
