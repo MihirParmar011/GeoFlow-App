@@ -56,7 +56,6 @@ key.properties
 # Firebase related config files (Do not commit sensitive configs!)
 google-services.json
 GoogleService-Info.plist
-firebase_options.dart
 
 # Custom User Ignores
 .ai
