@@ -280,7 +280,7 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
 
   /// Start navigation — calculate route from user location to selected pin
   void _startNavigation() {
-    final userLoc = ref.read(locationProvider).value;
+    final userLoc = ref.read(locationProvider).valueOrNull;
     if (userLoc == null || _selectedPinLocation == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Cannot start navigation — location unavailable.')),
@@ -404,24 +404,26 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
 
     // Update heading from location point
     ref.listen(locationPointProvider, (previous, next) {
-      if (next.hasValue && next.value != null) {
-        setState(() => _currentHeading = next.value!.heading);
+      final val = next.valueOrNull;
+      if (val != null) {
+        setState(() => _currentHeading = val.heading);
       }
     });
 
     // Auto-center on first location & follow-me mode
     ref.listen(locationProvider, (previous, next) {
-      if (next.hasValue && next.value != null) {
+      final loc = next.valueOrNull;
+      if (loc != null) {
         if (!_isMapCentered) {
           _isMapCentered = true;
-          _mapController.move(next.value!, 16.0);
+          _mapController.move(loc, 16.0);
         } else if (_isFollowingUser) {
-          _mapController.move(next.value!, _mapController.camera.zoom);
+          _mapController.move(loc, _mapController.camera.zoom);
         }
 
         // Update route ETA if navigation is active
         if (routeState.route != null) {
-          ref.read(activeRouteProvider.notifier).updateWithPosition(next.value!);
+          ref.read(activeRouteProvider.notifier).updateWithPosition(loc);
         }
       }
     });
@@ -493,9 +495,9 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
               // Layer 4: User location marker (TRD §3.1)
               MarkerLayer(
                 markers: [
-                  if (locationAsync.hasValue && locationAsync.value != null)
+                  if (locationAsync.valueOrNull != null)
                     Marker(
-                      point: locationAsync.value!,
+                      point: locationAsync.valueOrNull!,
                       width: 60,
                       height: 60,
                       child: VehicleMarker(
@@ -604,7 +606,7 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
                 onModeChanged: (mode) {
                   ref.read(travelModeProvider.notifier).state = mode;
                   // Recalculate with new mode
-                  final userLoc = ref.read(locationProvider).value;
+                  final userLoc = ref.read(locationProvider).valueOrNull;
                   if (userLoc != null && _selectedPinLocation != null) {
                     ref.read(activeRouteProvider.notifier).calculateRoute(
                       userLoc,

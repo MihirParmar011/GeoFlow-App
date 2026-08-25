@@ -7,6 +7,7 @@ import 'features/location/domain/entities/location_request_entity.dart';
 import 'features/auth/presentation/screens/auth_screen.dart';
 import 'features/location/presentation/providers/location_sync_provider.dart';
 import 'features/location/presentation/providers/location_share_provider.dart';
+import 'features/location/presentation/providers/live_location_state_provider.dart';
 
 class MainNavScreen extends ConsumerStatefulWidget {
   const MainNavScreen({super.key});
@@ -17,6 +18,7 @@ class MainNavScreen extends ConsumerStatefulWidget {
 
 class _MainNavScreenState extends ConsumerState<MainNavScreen> {
   int _currentIndex = 0;
+  final Set<String> _handledRequestIds = {};
 
   final List<Widget> _screens = [
     const MapScreen(),
@@ -34,8 +36,8 @@ class _MainNavScreenState extends ConsumerState<MainNavScreen> {
       if (next.hasValue && next.value != null) {
         final requests = next.value!;
         for (var request in requests) {
-          // If we haven't shown a dialog for this request yet
-          if (request.status == 'pending') {
+          if (request.status == 'pending' && !_handledRequestIds.contains(request.id)) {
+            _handledRequestIds.add(request.id);
             _showIncomingRequestDialog(request);
           }
         }
@@ -59,39 +61,125 @@ class _MainNavScreenState extends ConsumerState<MainNavScreen> {
     );
   }
 
-  void _showIncomingRequestDialog(var request) {
-    showDialog(
+  void _showIncomingRequestDialog(LocationRequestEntity request) {
+    showGeneralDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF12141C).withValues(alpha: 0.9),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24), side: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
-        title: const Text('Location Share Request', style: TextStyle(color: Colors.white)),
-        content: Text(
-          '${request.fromUsername} wants to share live locations with you.',
-          style: const TextStyle(color: Colors.white70),
+      barrierLabel: 'IncomingRequest',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 250),
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        return ScaleTransition(
+          scale: CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+          child: FadeTransition(opacity: animation, child: child),
+        );
+      },
+      pageBuilder: (ctx, anim1, anim2) => Center(
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 32),
+            constraints: const BoxConstraints(maxWidth: 360),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  padding: const EdgeInsets.all(26),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF12141C).withValues(alpha: 0.94),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.2)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.4),
+                        blurRadius: 30,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: Colors.cyanAccent.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(Icons.share_location_rounded, color: Colors.cyanAccent, size: 28),
+                      ),
+                      const SizedBox(height: 18),
+                      const Text(
+                        'Location Share Request',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${request.fromUsername} wants to share live locations with you in real-time.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.7),
+                          fontSize: 14,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.redAccent,
+                                side: BorderSide(color: Colors.redAccent.withValues(alpha: 0.4)),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              ),
+                              onPressed: () {
+                                ref.read(locationShareServiceProvider).rejectRequest(request.id);
+                                Navigator.pop(ctx);
+                              },
+                              child: const Text('Decline', style: TextStyle(fontWeight: FontWeight.bold)),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.cyanAccent,
+                                foregroundColor: Colors.black,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                elevation: 0,
+                              ),
+                              onPressed: () async {
+                                Navigator.pop(ctx);
+                                await ref.read(locationShareServiceProvider).acceptRequest(request.id);
+                                ref.read(isSharingProvider.notifier).state = true;
+                                ref.read(locationSyncProvider).forceSync();
+                                if (mounted) {
+                                  setState(() {
+                                    _currentIndex = 1; // Switch to Live screen
+                                  });
+                                }
+                              },
+                              child: const Text('Accept', style: TextStyle(fontWeight: FontWeight.bold)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              ref.read(locationShareServiceProvider).rejectRequest(request.id);
-              Navigator.pop(ctx);
-            },
-            child: const Text('Decline', style: TextStyle(color: Colors.redAccent)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.cyanAccent),
-            onPressed: () {
-              ref.read(locationShareServiceProvider).acceptRequest(request.id);
-              Navigator.pop(ctx);
-              // Switch to live location screen
-              setState(() {
-                _currentIndex = 1;
-              });
-            },
-            child: const Text('Accept', style: TextStyle(color: Colors.black)),
-          ),
-        ],
       ),
     );
   }
@@ -108,7 +196,6 @@ class _BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Smaller, more accessible floating bottom nav
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.only(left: 32, right: 32, bottom: 16),
@@ -117,7 +204,7 @@ class _BottomNavBar extends StatelessWidget {
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
             child: Container(
-              height: 56, // Reduced height
+              height: 56,
               decoration: BoxDecoration(
                 color: const Color(0xFF051424).withValues(alpha: 0.8),
                 borderRadius: BorderRadius.circular(24),

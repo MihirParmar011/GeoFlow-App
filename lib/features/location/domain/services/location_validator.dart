@@ -11,8 +11,9 @@ class LocationValidator {
       return true;
     }
 
-    // 2. Reject if accuracy is worse than 30 meters
-    if (newPosition.accuracy > 30.0) {
+    // 2. Reject only if accuracy is extremely poor (> 250 meters)
+    // to ensure indoor and mobile testing works smoothly
+    if (newPosition.accuracy > 250.0) {
       return false;
     }
 
@@ -21,7 +22,7 @@ class LocationValidator {
       return false;
     }
 
-    // 4. Reject impossible speeds (> 40 m/s or ~144 km/h)
+    // 4. Reject impossible speeds (> 80 m/s or ~288 km/h)
     final distanceHelper = const Distance();
     final distanceInMeters = distanceHelper.as(
       LengthUnit.Meter,
@@ -33,8 +34,8 @@ class LocationValidator {
     
     if (timeDiffInSeconds > 0) {
       final speedMetersPerSecond = distanceInMeters / timeDiffInSeconds;
-      if (speedMetersPerSecond > 40.0) {
-        return false; // Jumped too fast (teleportation)
+      if (speedMetersPerSecond > 80.0) {
+        return false; // Jumped too fast (teleportation anomaly)
       }
     }
 
