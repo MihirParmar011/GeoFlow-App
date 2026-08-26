@@ -79,9 +79,22 @@ jobs:
           name: release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
 
-      # Step 9: Distribute APK to Firebase App Distribution (Runs when FIREBASE_SERVICE_ACCOUNT_KEY is configured)
+      # Step 9: Check Firebase Service Account Credentials
+      - name: 🔍 Check Firebase Credentials
+        id: check_credentials
+        env:
+          SERVICE_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+        run: |
+          if [ -n "$SERVICE_KEY" ]; then
+            echo "has_key=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_key=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Firebase App Distribution Skipped::FIREBASE_SERVICE_ACCOUNT_KEY secret is not set in GitHub repository settings. The APK build succeeded and is available in Artifacts."
+          fi
+
+      # Step 10: Distribute APK to Firebase App Distribution (Runs when credentials exist)
       - name: 🚀 Upload to Firebase App Distribution
-        if: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY != '' }}
+        if: steps.check_credentials.outputs.has_key == 'true'
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
           appId: ${{ secrets.FIREBASE_APP_ID || '1:1011942886407:android:a9d46be3a6f3c7e2662ea2' }}
@@ -92,9 +105,3 @@ jobs:
             Commit: ${{ github.sha }}
             Message: ${{ github.event.head_commit.message }}
             Branch: ${{ github.ref_name }}
-
-      # Step 10: Notice if Firebase Distribution is skipped
-      - name: ℹ️ Firebase Distribution Secret Notice
-        if: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY == '' }}
-        run: |
-          echo "::warning title=Firebase App Distribution Skipped::FIREBASE_SERVICE_ACCOUNT_KEY secret is not set in GitHub repository settings. The APK build succeeded and is available in Artifacts."
