@@ -32,26 +32,54 @@ jobs:
           channel: 'stable'
           cache: true
 
-      # Step 4: Install Flutter dependencies
+      # Step 4: Restore Firebase configuration files from Secrets if not in git
+      - name: ⚙️ Restore Firebase Configuration
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+          FIREBASE_OPTIONS_DART: ${{ secrets.FIREBASE_OPTIONS_DART }}
+        run: |
+          if [ ! -f "android/app/google-services.json" ]; then
+            if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+              mkdir -p android/app
+              echo "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+              echo "✅ Created android/app/google-services.json from secret"
+            else
+              echo "❌ Error: android/app/google-services.json is missing and GOOGLE_SERVICES_JSON secret is not set."
+              echo "Please add GOOGLE_SERVICES_JSON to GitHub Repository Secrets or commit google-services.json to git."
+              exit 1
+            fi
+          else
+            echo "✅ android/app/google-services.json found in repository."
+          fi
+
+          if [ ! -f "lib/firebase_options.dart" ]; then
+            if [ -n "$FIREBASE_OPTIONS_DART" ]; then
+              mkdir -p lib
+              echo "$FIREBASE_OPTIONS_DART" > lib/firebase_options.dart
+              echo "✅ Created lib/firebase_options.dart from secret"
+            fi
+          fi
+
+      # Step 5: Install Flutter dependencies
       - name: 📦 Install Dependencies
         run: flutter pub get
 
-      # Step 5: Verify static analysis (Optional safety check)
+      # Step 6: Verify static analysis (Optional safety check)
       - name: 🔍 Static Analysis
         run: flutter analyze || true
 
-      # Step 6: Build the Release APK
+      # Step 7: Build the Release APK
       - name: 🔨 Build Release APK
         run: flutter build apk --release
 
-      # Step 7: Upload APK as GitHub Action Artifact (for download from GitHub)
+      # Step 8: Upload APK as GitHub Action Artifact (for download from GitHub)
       - name: 📤 Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
 
-      # Step 8: Distribute APK to Firebase App Distribution
+      # Step 9: Distribute APK to Firebase App Distribution
       - name: 🚀 Upload to Firebase App Distribution
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
