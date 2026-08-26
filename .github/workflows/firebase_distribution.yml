@@ -79,8 +79,9 @@ jobs:
           name: release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
 
-      # Step 9: Distribute APK to Firebase App Distribution
+      # Step 9: Distribute APK to Firebase App Distribution (Runs when FIREBASE_SERVICE_ACCOUNT_KEY is configured)
       - name: 🚀 Upload to Firebase App Distribution
+        if: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY != '' }}
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
           appId: ${{ secrets.FIREBASE_APP_ID || '1:1011942886407:android:a9d46be3a6f3c7e2662ea2' }}
@@ -91,3 +92,9 @@ jobs:
             Commit: ${{ github.sha }}
             Message: ${{ github.event.head_commit.message }}
             Branch: ${{ github.ref_name }}
+
+      # Step 10: Notice if Firebase Distribution is skipped
+      - name: ℹ️ Firebase Distribution Secret Notice
+        if: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY == '' }}
+        run: |
+          echo "::warning title=Firebase App Distribution Skipped::FIREBASE_SERVICE_ACCOUNT_KEY secret is not set in GitHub repository settings. The APK build succeeded and is available in Artifacts."
