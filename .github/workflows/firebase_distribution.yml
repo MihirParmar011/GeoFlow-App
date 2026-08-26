@@ -99,7 +99,7 @@ jobs:
         with:
           appId: ${{ secrets.FIREBASE_APP_ID || '1:1011942886407:android:a9d46be3a6f3c7e2662ea2' }}
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
-          groups: ${{ secrets.FIREBASE_TESTER_GROUPS }}
+          groups: ${{ secrets.FIREBASE_TESTER_GROUPS || 'tester' }}
           file: build/app/outputs/flutter-apk/app-release.apk
           releaseNotes: |
             Commit: ${{ github.sha }}
