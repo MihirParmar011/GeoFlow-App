@@ -12,11 +12,20 @@ import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await EasyLocalization.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  try {
+    await EasyLocalization.ensureInitialized();
+  } catch (e, stack) {
+    debugPrint('EasyLocalization initialization error: $e\n$stack');
+  }
+
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e, stack) {
+    debugPrint('Firebase initialization error: $e\n$stack');
+  }
 
   runApp(
     EasyLocalization(

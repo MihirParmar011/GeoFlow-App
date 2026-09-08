@@ -27,7 +27,7 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'REPLACE_WITH_FIREBASE_WEB_API_KEY',
+    apiKey: 'AIzaSyDC6TCgzPl8_3SUU59OYHYSboimZ8kpuYk',
     appId: '1:1011942886407:web:20a639fdc70ecfe6662ea2',
     messagingSenderId: '1011942886407',
     projectId: 'geoflow-011',
@@ -36,7 +36,7 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'REPLACE_WITH_FIREBASE_ANDROID_API_KEY',
+    apiKey: 'AIzaSyDC6TCgzPl8_3SUU59OYHYSboimZ8kpuYk',
     appId: '1:1011942886407:android:a9d46be3a6f3c7e2662ea2',
     messagingSenderId: '1011942886407',
     projectId: 'geoflow-011',
@@ -44,7 +44,7 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'REPLACE_WITH_FIREBASE_IOS_API_KEY',
+    apiKey: 'AIzaSyDC6TCgzPl8_3SUU59OYHYSboimZ8kpuYk',
     appId: '1:1011942886407:ios:67c39f5a542edc13662ea2',
     messagingSenderId: '1011942886407',
     projectId: 'geoflow-011',

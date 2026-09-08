@@ -72,7 +72,7 @@ class SearchResultsOverlay extends StatelessWidget {
                     shrinkWrap: true,
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     itemCount: results.length,
-                    separatorBuilder: (_, __) => Divider(
+                    separatorBuilder: (context, index) => Divider(
                       color: Colors.white.withValues(alpha: 0.06),
                       height: 1,
                       indent: 56,

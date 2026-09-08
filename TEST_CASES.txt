@@ -1,0 +1,625 @@
+================================================================================
+                      GEOFLOW MOBILE APPLICATION
+                  COMPREHENSIVE QUALITY ASSURANCE & TEST PLAN
+                              Version: 1.0.0
+================================================================================
+
+TABLE OF CONTENTS:
+1. TEST ENVIRONMENT & PREREQUISITES
+2. TEST DEVICE MATRIX
+3. MODULE 1: APP LAUNCH, PERMISSIONS & INITIALIZATION (TC-001 to TC-005)
+4. MODULE 2: AUTHENTICATION & USER MANAGEMENT (TC-006 to TC-012)
+5. MODULE 3: INTERACTIVE MAP & EXPLORATION (TC-013 to TC-020)
+6. MODULE 4: PLACE SEARCH & GEOCODING (NOMINATIM) (TC-021 to TC-026)
+7. MODULE 5: TURN-BY-TURN ROUTING & DIRECTIONS (OSRM) (TC-027 to TC-032)
+8. MODULE 6: REAL-TIME DUAL-USER LIVE LOCATION SHARING (TC-033 to TC-044)
+9. MODULE 7: NETWORK, OFFLINE & EDGE CASES (TC-045 to TC-050)
+10. MODULE 8: THEME, LOCALIZATION & UI/UX (TC-051 to TC-055)
+11. STEP-BY-STEP DUAL-DEVICE TESTING PROTOCOL (User A & User B)
+12. TEST EXECUTION REPORTING TEMPLATE
+
+================================================================================
+1. TEST ENVIRONMENT & PREREQUISITES
+================================================================================
+Before starting testing, ensure the following requirements are met:
+- Test APK: Build and install the latest release APK or download via Firebase App Distribution.
+- Devices: At least TWO physical Android devices or emulators to test real-time dual-user location sharing.
+- Internet Connection: Active Wi-Fi or Cellular 4G/5G data connection.
+- Location Services: Device GPS/Location enabled with High Accuracy mode.
+- Firebase Backend: Active Cloud Firestore instance and Firebase Authentication.
+
+================================================================================
+2. TEST DEVICE MATRIX
+================================================================================
+- Primary Test Device: Android 12 / 13 / 14 / 15 physical smartphone
+- Secondary Test Device: Android 10+ smartphone or Android Virtual Device (AVD)
+- Screen Densities: HD+, FHD+, QHD+ (various aspect ratios)
+
+================================================================================
+3. MODULE 1: APP LAUNCH, PERMISSIONS & INITIALIZATION
+================================================================================
+
+[TC-001] First Launch & Splash Initialization
+- Precondition: App freshly installed.
+- Steps:
+  1. Launch the GeoFlow application.
+  2. Observe the initial splash and screen rendering.
+- Expected Result:
+  - App launches without any crash or ANR (Application Not Responding).
+  - Main navigation shell loads with bottom bar (Map, Live, Account).
+  - Default localization (English) and dark theme load smoothly.
+
+[TC-002] Location Permission Request - Grant While Using App
+- Precondition: Fresh install with no granted permissions.
+- Steps:
+  1. Open the Map or Live screen.
+  2. Trigger location access.
+  3. When OS permission dialog appears, tap "While using the app" (Precise location).
+- Expected Result:
+  - App receives location permission.
+  - User's vehicle/location marker appears at exact GPS coordinates on map.
+  - Map centers on current location.
+
+[TC-003] Location Permission Request - Denied
+- Precondition: Fresh install.
+- Steps:
+  1. Launch app and tap "Don't allow" on OS permission prompt.
+  2. Attempt to toggle location sharing or tap "My Location" button.
+- Expected Result:
+  - App handles permission refusal gracefully without crashing.
+  - In-app snackbar/dialog informs user that location permission is required.
+
+[TC-004] Location Permission - Permanently Denied / Settings Redirect
+- Precondition: Permission set to "Never allow" in Android settings.
+- Steps:
+  1. Attempt to enable live location sharing.
+- Expected Result:
+  - Dialog or snackbar appears with "Settings" action button.
+  - Tapping "Settings" redirects user to Android App Settings page.
+
+[TC-005] GPS / Device Location Disabled Handling
+- Precondition: Turn OFF device Location (GPS) in Android quick settings toggle.
+- Steps:
+  1. Launch app or toggle live location sharing.
+- Expected Result:
+  - "Location Services Disabled" modal dialog appears.
+  - Tapping "Enable Location" opens Android Location Settings.
+  - Once GPS is enabled and user returns, map automatically resumes location stream.
+
+================================================================================
+4. MODULE 2: AUTHENTICATION & USER MANAGEMENT
+================================================================================
+
+[TC-006] User Registration with Email & Password
+- Precondition: User is on Account / Auth Screen.
+- Steps:
+  1. Navigate to Account tab (icon on the right).
+  2. Toggle to "REGISTER ACCOUNT" mode.
+  3. Enter Username: "explorer_alpha"
+  4. Enter Email: "alpha@example.com"
+  5. Enter Password: "Password123!"
+  6. Tap "REGISTER ACCOUNT".
+- Expected Result:
+  - Loading spinner appears during network request.
+  - Account is created in Firebase Auth & Firestore `users` collection.
+  - Screen switches to User Profile view displaying username "explorer_alpha" and email.
+
+[TC-007] User Login with Registered Credentials
+- Precondition: Existing account created in TC-006.
+- Steps:
+  1. On Account tab, ensure "LOG INTO EXISTING ACCOUNT" is active.
+  2. Enter valid email and password.
+  3. Tap "AUTHORIZE SESSION".
+- Expected Result:
+  - Successful authentication.
+  - Profile view loads showing user stats and active session manager.
+
+[TC-008] Login with Invalid Password / Non-existent Email
+- Precondition: On Login screen.
+- Steps:
+  1. Enter invalid email or incorrect password.
+  2. Tap "AUTHORIZE SESSION".
+- Expected Result:
+  - Error snackbar displays with clear error message (e.g. invalid credentials / user not found).
+  - App does not crash.
+
+[TC-009] Anonymous / Guest User Entry
+- Precondition: Logged out on Auth screen.
+- Steps:
+  1. Scroll down to "Anonymous Entry" section.
+  2. Enter Guest Username: "guest_pilot"
+  3. Tap "CONTINUE AS GUEST".
+- Expected Result:
+  - Firebase Anonymous authentication completes.
+  - Profile view displays "guest_pilot" with "Guest Account" badge.
+  - Guest profile is saved in Firestore `guests` collection.
+
+[TC-010] User Profile & Statistics View
+- Precondition: Logged in as registered user.
+- Steps:
+  1. Open Account tab.
+- Expected Result:
+  - Profile avatar, username, email, and account status are visible.
+  - Active location-sharing sessions list is shown.
+
+[TC-011] User Logout
+- Precondition: Logged in user on Account tab.
+- Steps:
+  1. Scroll to bottom and tap "LOGOUT" button.
+- Expected Result:
+  - User session is invalidated in Firebase Auth.
+  - Screen transitions back to Auth Login/Registration form.
+  - Location sharing stops immediately.
+
+[TC-012] Auth State Persistence Across App Restarts
+- Precondition: Logged in as user.
+- Steps:
+  1. Kill app process from Android App Switcher.
+  2. Re-open GeoFlow app.
+  3. Navigate to Account tab.
+- Expected Result:
+  - User remains logged in without requiring re-authentication.
+
+================================================================================
+5. MODULE 3: INTERACTIVE MAP & EXPLORATION
+================================================================================
+
+[TC-013] OpenStreetMap Tile Rendering & Zoom/Pan
+- Precondition: Map Screen opened with network active.
+- Steps:
+  1. Pan across the map in multiple directions.
+  2. Perform pinch-to-zoom gestures (zoom in up to level 18, zoom out).
+  3. Double tap to zoom in.
+- Expected Result:
+  - Map tiles load smoothly without grey blocks or stuttering.
+  - Panning and zooming are fluid (60 fps).
+
+[TC-014] Map Style Layer Switching
+- Precondition: On Map Screen.
+- Steps:
+  1. Tap the Map Style icon / selector.
+  2. Select different styles (e.g., Dark Mode, Street, Satellite/Topology).
+- Expected Result:
+  - Map tiles immediately transition to the chosen style.
+  - UI contrast and marker visibility remain clear across all styles.
+
+[TC-015] Own Vehicle / User Marker & Heading Orientation
+- Precondition: Location permission granted.
+- Steps:
+  1. Observe the cyan vehicle marker on the map.
+  2. Rotate device or move in a direction.
+- Expected Result:
+  - Vehicle marker displays at exact current latitude/longitude.
+  - Directional indicator arrow aligns with device compass heading.
+
+[TC-016] Follow-Me Camera Mode & Breakout Pan
+- Precondition: Map centered on user location.
+- Steps:
+  1. Verify camera follows user movement.
+  2. Manually drag/pan the map away from user.
+  3. Observe follow-me state.
+  4. Tap the "Recenter / My Location" FAB.
+- Expected Result:
+  - Manually panning breaks camera lock smoothly.
+  - Tapping "Recenter" smoothly animates camera (fly-to) back to user coordinates.
+
+[TC-017] Map Compass Widget Functionality
+- Precondition: Map rotated with two-finger twist gesture.
+- Steps:
+  1. Twist map with two fingers to rotate away from North.
+  2. Observe compass widget orientation.
+  3. Tap the Compass widget.
+- Expected Result:
+  - Compass needle dynamically reflects map bearing.
+  - Tapping compass resets map rotation to North (0° bearing) with smooth animation.
+
+[TC-018] Dynamic Scale Bar Verification
+- Precondition: Map Screen opened.
+- Steps:
+  1. Zoom in to street level.
+  2. Zoom out to city and country level.
+- Expected Result:
+  - Scale bar dynamically updates metric distances (e.g. 50m, 200m, 1km, 10km).
+
+[TC-019] Long-Press Reverse Geocoding Pin Drop
+- Precondition: On Map Screen.
+- Steps:
+  1. Long-press on any arbitrary location on the map.
+- Expected Result:
+  - Custom pin drops on the tapped coordinate.
+  - Camera animates to the pin.
+  - Nominatim reverse geocoding request resolves and displays the location name.
+  - Bottom location details sheet opens with address details.
+
+[TC-020] Map Attribution Widget
+- Precondition: On Map Screen.
+- Steps:
+  1. Check bottom-right of map view.
+- Expected Result:
+  - OpenStreetMap / tile provider attribution is properly displayed.
+
+================================================================================
+6. MODULE 4: PLACE SEARCH & GEOCODING (NOMINATIM)
+================================================================================
+
+[TC-021] Instant Search with Debounced Suggestions
+- Precondition: Map Screen opened.
+- Steps:
+  1. Tap on the search bar ("Search locations...").
+  2. Type "Eiffel Tower" or "Central Park".
+  3. Pause typing for 300ms.
+- Expected Result:
+  - Debounce prevents excessive API calls.
+  - Dropdown suggestion list appears with matching places and descriptions.
+
+[TC-022] Place Selection & Camera Fly-To
+- Precondition: Search results displayed in overlay.
+- Steps:
+  1. Tap one of the search result items.
+- Expected Result:
+  - Search overlay closes and keyboard dismisses.
+  - Map camera smoothly flies to selected place coordinates.
+  - Pin marker appears on the selected place.
+  - Location detail bottom sheet opens.
+
+[TC-023] Search with No Results / Special Characters
+- Precondition: Search bar focused.
+- Steps:
+  1. Type non-existent query (e.g., "zzxxqqww112233!@#").
+- Expected Result:
+  - Overlay indicates "No results found" or empty state gracefully without crash.
+
+[TC-024] Clear Search Query
+- Precondition: Text entered in search bar.
+- Steps:
+  1. Tap the "X" (Clear) icon in the search bar.
+- Expected Result:
+  - Input field is cleared.
+  - Search overlay closes and map focus restores.
+
+[TC-025] Search Recent History Persistence
+- Precondition: Search places multiple times.
+- Steps:
+  1. Tap search bar when empty.
+- Expected Result:
+  - Recently searched locations are listed for quick one-tap access.
+
+[TC-026] Search Under Low Network / Timeout
+- Precondition: Slow 2G/throttled network.
+- Steps:
+  1. Enter search query.
+- Expected Result:
+  - Search loading indicator displays.
+  - If network times out, error message is shown without freezing the UI.
+
+================================================================================
+7. MODULE 5: TURN-BY-TURN ROUTING & DIRECTIONS (OSRM)
+================================================================================
+
+[TC-027] Generate Driving Route Between Current Location & Destination
+- Precondition: User location available.
+- Steps:
+  1. Search for a destination or drop a pin via long-press.
+  2. On the location detail sheet, tap "Get Directions" / "Route".
+- Expected Result:
+  - OSRM routing API calculates the driving route.
+  - Cyan route polyline draws accurately along the road network.
+  - Camera fits the bounding box of the entire route.
+
+[TC-028] Route Information Card Display (Distance & ETA)
+- Precondition: Route generated in TC-027.
+- Steps:
+  1. Observe the floating Route Info Card.
+- Expected Result:
+  - Total distance (e.g. "12.4 km") and estimated travel time (e.g. "22 mins") are shown.
+  - Route starting point and destination icons are visible.
+
+[TC-029] Clear / Cancel Active Route
+- Precondition: Active route displayed on map.
+- Steps:
+  1. Tap "Close / Clear Route" button on Route Info Card.
+- Expected Result:
+  - Route polyline is cleared from the map.
+  - Route info card dismisses cleanly.
+  - Map returns to standard free exploration mode.
+
+[TC-030] Routing Between Two Remote Points (Non-Current Location)
+- Precondition: Search a destination while GPS is far away.
+- Steps:
+  1. Request route between custom start and end points.
+- Expected Result:
+  - Route connects start coordinate to end coordinate without distortion.
+
+[TC-031] Long Distance Inter-City Routing
+- Precondition: Select a destination 200+ km away.
+- Steps:
+  1. Generate route.
+- Expected Result:
+  - Polyline handles large coordinate sets smoothly without UI memory lag.
+
+[TC-032] Routing API Failure / Unreachable Destination (e.g., Ocean)
+- Precondition: Drop a pin in the ocean or island with no roads.
+- Steps:
+  1. Request route.
+- Expected Result:
+  - App displays "No route found" snackbar gracefully.
+
+================================================================================
+8. MODULE 6: REAL-TIME DUAL-USER LIVE LOCATION SHARING
+================================================================================
+
+[TC-033] Toggle Live Location Sharing ON/OFF (Self)
+- Precondition: On Live Location Screen.
+- Steps:
+  1. Tap the Live Sharing toggle button / vehicle marker.
+- Expected Result:
+  - State switches between Sharing ON (cyan active pulse) and Sharing OFF.
+  - When ON: Coordinates stream to Firestore `live_locations/{userId}` every 3-5s.
+  - When OFF: Live streaming pauses and status indicator shows inactive.
+
+[TC-034] Send Live Location Request to Another User
+- Precondition:
+  - User A logged in as "alex_01" on Device 1.
+  - User B logged in as "sam_02" on Device 2.
+- Steps:
+  1. On Device 1 (User A), navigate to Live tab.
+  2. Tap the "Add Friend / Share" button in top-right.
+  3. Enter User B's username: "sam_02".
+  4. Tap "Send Request".
+- Expected Result:
+  - Request document is created in Firestore `location_requests` with status 'pending'.
+  - Device 1 shows snackbar "Request sent to sam_02!".
+  - Sharing automatically activates for User A.
+
+[TC-035] Receive Real-Time Incoming Request Modal (User B)
+- Precondition: User A sent request in TC-034.
+- Steps:
+  1. Observe Device 2 (User B) screen while anywhere in the app.
+- Expected Result:
+  - Glassmorphic modal dialog pops up in real-time (< 1s latency).
+  - Dialog text: "alex_01 wants to share live locations with you in real-time."
+  - Two buttons displayed: "Decline" (red outline) and "Accept" (cyan filled).
+
+[TC-036] Accept Location Share Request (User B)
+- Precondition: Modal visible on Device 2 from TC-035.
+- Steps:
+  1. User B taps "Accept".
+- Expected Result:
+  - Request document status in Firestore updates to 'accepted'.
+  - Live sharing automatically activates on Device 2.
+  - Device 2 switches to the Live Location screen.
+  - Active session established between User A and User B.
+
+[TC-037] Decline Location Share Request (User B)
+- Precondition: User A sends a new request to User B.
+- Steps:
+  1. User B taps "Decline".
+- Expected Result:
+  - Request document status in Firestore updates to 'rejected'.
+  - Dialog dismisses on Device 2.
+  - No location sharing session is created.
+
+[TC-038] Dual-User Real-Time Markers on Map
+- Precondition: Active sharing session between User A and User B.
+- Steps:
+  1. View the Live Location screen on both devices.
+- Expected Result:
+  - Device 1 shows User A's cyan vehicle marker AND User B's purple partner marker.
+  - Device 2 shows User B's cyan vehicle marker AND User A's purple partner marker.
+  - Partner marker displays partner's username above the pin.
+
+[TC-039] Smooth Position Animation & Interpolation
+- Precondition: Dual-user sharing active.
+- Steps:
+  1. Move Device 1 (walk or simulate GPS movement).
+  2. Observe Device 2's screen.
+- Expected Result:
+  - Partner marker does not teleport abruptly.
+  - Smooth animation controller smoothly glides partner marker between coordinates.
+
+[TC-040] Live Telemetry & Distance Calculation
+- Precondition: Dual-user sharing active.
+- Steps:
+  1. Tap on Partner's marker or open Live info panel.
+- Expected Result:
+  - Bottom sheet displays:
+    * Real-time distance between User A and User B (e.g. "350 m" or "4.2 km").
+    * GPS Accuracy indicator (e.g. "±5m").
+    * Online / Live pulse indicator.
+    * "Center" button to fly camera to partner.
+    * "Stop Sharing" button.
+
+[TC-041] Auto-Fit Camera to Both Users
+- Precondition: Dual-user sharing active.
+- Steps:
+  1. Initial load or tap "Fit Both" button.
+- Expected Result:
+  - Camera bounds automatically frame both User A and User B within the viewport.
+
+[TC-042] Partner Goes Offline / Throttled Updates
+- Precondition: Active session.
+- Steps:
+  1. Turn off internet or background Device 1 for > 30 seconds.
+  2. Observe Device 2.
+- Expected Result:
+  - Partner status changes from green "LIVE" to "Offline" or "Last seen X mins ago".
+
+[TC-043] Terminate Active Sharing Session (User A)
+- Precondition: Active session between User A and User B.
+- Steps:
+  1. User A taps partner marker -> taps "Stop Sharing" (or removes from Account tab).
+- Expected Result:
+  - Session document is removed from Firestore.
+  - Partner marker disappears from both devices.
+  - Snackbar confirms "Stopped sharing with sam_02".
+
+[TC-044] Connection Quality Indicator (Green / Orange / Red)
+- Precondition: Live Location screen open.
+- Steps:
+  1. Observe top bar status pill under good Wi-Fi, weak signal, and disconnected state.
+- Expected Result:
+  - Shows Green dot ("Excellent/Live"), Orange dot ("Weak/Slow"), or Red dot ("Disconnected").
+
+================================================================================
+9. MODULE 7: NETWORK, OFFLINE & EDGE CASES
+================================================================================
+
+[TC-045] Offline Mode / Airplane Mode During Map Exploration
+- Precondition: Enable Airplane Mode while map is open.
+- Steps:
+  1. Navigate around previously cached map area.
+  2. Pan to uncached region.
+- Expected Result:
+  - Cached tiles remain visible.
+  - App displays offline indicator without crashing.
+
+[TC-046] Network Reconnection & Stream Resumption
+- Precondition: App offline.
+- Steps:
+  1. Disable Airplane mode (reconnect to Internet).
+- Expected Result:
+  - Map tiles resume loading.
+  - Firestore live sync stream reconnects automatically within 3 seconds.
+
+[TC-047] Rapid Repeated Tapping on Action Buttons
+- Precondition: Any screen with action buttons.
+- Steps:
+  1. Rapidly tap "Send Request", "Toggle Sharing", or "Get Route" 10 times in 1 second.
+- Expected Result:
+  - App does not spawn duplicate dialogs, multiple Firestore docs, or crash.
+
+[TC-048] Backgrounding and Resuming Application
+- Precondition: Active sharing session running.
+- Steps:
+  1. Press Home button to send app to background for 1 minute.
+  2. Re-open GeoFlow from App Switcher.
+- Expected Result:
+  - `didChangeAppLifecycleState` triggers.
+  - Location providers invalidate and force-sync latest position immediately.
+
+[TC-049] Low Memory / Device Rotation / Screen Resize
+- Precondition: Foldable device or screen split-screen mode.
+- Steps:
+  1. Switch to split screen or rotate device.
+- Expected Result:
+  - Responsive layout adapts cleanly without overflow errors.
+  - Glassmorphic panels adjust padding properly.
+
+[TC-050] Invalid Search or Route Coordinates Edge Cases
+- Precondition: Manually passing null / 0,0 / NaN coordinates.
+- Steps:
+  1. Test extreme bounds (North Pole, South Pole, Prime Meridian).
+- Expected Result:
+  - `LocationValidator` catches invalid coordinates.
+  - Map camera clamp prevents infinite zoom or coordinate overflow.
+
+================================================================================
+10. MODULE 8: THEME, LOCALIZATION & UI/UX
+================================================================================
+
+[TC-051] Dark Theme Aesthetics & Visual Hierarchy
+- Precondition: Dark theme active.
+- Steps:
+  1. Verify contrast, typography, and neon cyan accents across all tabs.
+- Expected Result:
+  - Deep dark background (`#0A0E17` / `#12141C`) with vibrant cyan (`#00E5FF`).
+  - Text is sharp and readable with good contrast ratio.
+
+[TC-052] Glassmorphism & Backdrop Blur Quality
+- Precondition: Open modal dialog or bottom navigation bar.
+- Steps:
+  1. Pan the map underneath the floating glass navigation bar.
+- Expected Result:
+  - Map tiles blur smoothly in real time under the translucent navigation pill.
+
+[TC-053] Micro-Animations with flutter_animate
+- Precondition: Open incoming request dialog or switch tabs.
+- Steps:
+  1. Observe entry animations.
+- Expected Result:
+  - Scale and fade transitions occur with smooth cubic easing curves.
+
+[TC-054] Localization & String Integrity (EasyLocalization)
+- Precondition: Check labels across the app.
+- Steps:
+  1. Verify text strings: "app_name", "search_locations", "Map", "Live", "Account".
+- Expected Result:
+  - All keys resolve to clean human-readable text with no raw translation keys displayed.
+
+[TC-055] Safe Area & Notch / Home Indicator Insets
+- Precondition: Device with notch / dynamic island / navigation pill.
+- Steps:
+  1. Inspect top status bar and bottom navigation padding.
+- Expected Result:
+  - UI content is not obscured by system notches or gesture navigation bars.
+
+================================================================================
+11. STEP-BY-STEP DUAL-DEVICE TESTING PROTOCOL (User A & User B)
+================================================================================
+
+Follow this exact script to verify full end-to-end functionality:
+
+--- DEVICE 1 (Tester A) ---
+Step 1: Install APK on Device 1.
+Step 2: Launch App -> Allow Location Permission.
+Step 3: Go to Account Tab -> Register as:
+        Username: "tester_alpha"
+        Email: "alpha@test.com"
+        Password: "TestPassword123!"
+
+--- DEVICE 2 (Tester B) ---
+Step 4: Install APK on Device 2.
+Step 5: Launch App -> Allow Location Permission.
+Step 6: Go to Account Tab -> Register as:
+        Username: "tester_beta"
+        Email: "beta@test.com"
+        Password: "TestPassword123!"
+
+--- INITIATE SHARING ---
+Step 7: On Device 1 (tester_alpha) -> Go to "Live" tab.
+Step 8: Tap the top-right "Add Friend" icon (+).
+Step 9: Type username "tester_beta" -> Tap "Send Request".
+
+--- ACCEPT & VERIFY ---
+Step 10: On Device 2 (tester_beta), observe the incoming popup dialog.
+Step 11: Tap "Accept" on Device 2.
+Step 12: On both devices, observe the map:
+         - Device 1 shows "tester_alpha" (Cyan) and "tester_beta" (Purple).
+         - Device 2 shows "tester_beta" (Cyan) and "tester_alpha" (Purple).
+Step 13: Move Device 1 slightly -> Verify Device 2 sees the purple marker move smoothly.
+Step 14: Tap the partner marker on Device 1 -> Verify real-time distance is displayed.
+Step 15: Tap "Stop Sharing" -> Verify session ends on both devices.
+
+================================================================================
+12. TEST EXECUTION REPORTING TEMPLATE
+================================================================================
+
+Copy and use this template when reporting QA results:
+
+Test Execution Date: [YYYY-MM-DD]
+Tested Build Version: 1.0.0 (Build 1)
+Tester Name: [Name / Email]
+Device Model(s): [e.g. Google Pixel 8 / Samsung Galaxy S23]
+Android Version(s): [e.g. Android 14]
+
+SUMMARY:
+- Total Test Cases: 55
+- Passed: [ ]
+- Failed: [ ]
+- Blocked / Skipped: [ ]
+
+BUG REPORT FORMAT (For any failures):
+- Bug ID: BUG-001
+- Test Case ID: [e.g. TC-035]
+- Severity: [Critical / High / Medium / Low]
+- Summary: [Short description of the defect]
+- Steps to Reproduce:
+  1. ...
+  2. ...
+- Expected Result: [...]
+- Actual Result: [...]
+- Device Logs / Screenshots: [Attach details]
+
+================================================================================
+                            END OF TEST PLAN
+================================================================================

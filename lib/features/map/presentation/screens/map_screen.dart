@@ -5,7 +5,6 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../location/presentation/providers/location_provider.dart';
-import '../../data/datasources/nominatim_service.dart';
 import '../../domain/entities/map_style_entity.dart';
 import '../../domain/entities/place_entity.dart';
 import '../../domain/entities/route_entity.dart';
@@ -329,7 +328,7 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         itemCount: MapStyleEntity.availableStyles.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 12),
+                        separatorBuilder: (context, index) => const SizedBox(width: 12),
                         itemBuilder: (_, index) {
                           final style = MapStyleEntity.availableStyles[index];
                           final isSelected = currentStyle.id == style.id;
@@ -395,7 +394,6 @@ class _MapScreenState extends ConsumerState<MapScreen> with TickerProviderStateM
   @override
   Widget build(BuildContext context) {
     final locationAsync = ref.watch(locationProvider);
-    final locationPointAsync = ref.watch(locationPointProvider);
     final mapStyle = ref.watch(mapStyleProvider);
     final searchResults = ref.watch(searchResultsProvider);
     final routeState = ref.watch(activeRouteProvider);

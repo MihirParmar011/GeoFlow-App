@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../../location/presentation/providers/location_share_provider.dart';
-import '../../../location/domain/services/location_share_service.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
